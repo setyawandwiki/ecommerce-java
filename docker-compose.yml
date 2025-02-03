@@ -4,6 +4,7 @@ services:
 
   ecommerce-app:
     build: .
+    image: ecommerce-app:0.1.1
     ports:
       - "3000:3000"
     environment:
