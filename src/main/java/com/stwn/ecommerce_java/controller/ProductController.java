@@ -2,6 +2,7 @@ package com.stwn.ecommerce_java.controller;
 
 import com.stwn.ecommerce_java.model.ProductRequest;
 import com.stwn.ecommerce_java.model.ProductResponse;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -38,7 +39,7 @@ public class ProductController {
         );
     }
     @PostMapping
-    public ResponseEntity<ProductResponse> createProduct(@RequestBody ProductRequest request){
+    public ResponseEntity<ProductResponse> createProduct(@RequestBody @Valid ProductRequest request){
         return ResponseEntity.ok(
                 ProductResponse.builder()
                         .name(request.getName())
@@ -49,7 +50,7 @@ public class ProductController {
     }
     @PutMapping(path = "/{id}")
     public ResponseEntity<ProductResponse> updateProduct(@PathVariable("id") Long productId,
-                                                         @RequestBody ProductRequest request){
+                                                         @RequestBody @Valid ProductRequest request){
         return ResponseEntity.ok(
                 ProductResponse.builder()
                         .name(request.getName())
