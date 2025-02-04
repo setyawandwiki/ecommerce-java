@@ -1,5 +1,6 @@
 package com.stwn.ecommerce_java.model;
 
+import jakarta.persistence.Column;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -22,4 +24,7 @@ public class ProductRequest {
     @NotNull(message = "deskripsi produk tidak boleh null")
     @Size(max = 100, message = "deskripsi produk tidak boleh lebih dari 100 karakter")
     private String description;
+    private Integer stockQuantity;
+    private BigDecimal weight;
+    private List<Long> categoryIds;
 }

@@ -2,6 +2,7 @@ package com.stwn.ecommerce_java.model;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import com.stwn.ecommerce_java.entity.Category;
 import com.stwn.ecommerce_java.entity.Product;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,7 +30,7 @@ public class ProductResponse {
     private LocalDateTime updatedAt;
     private List<CategoryResponse> categories;
 
-    public static ProductResponse productResponse(Product product){
+    public static ProductResponse fromProductResponse(Product product, List<CategoryResponse> categories){
         return ProductResponse.builder()
                 .productId(product.getId())
                 .name(product.getName())
@@ -37,6 +38,7 @@ public class ProductResponse {
                 .description(product.getDescription())
                 .stockQuantity(product.getStockQuantity())
                 .weight(product.getWeight())
+                .categories(categories)
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
                 .build();
