@@ -5,6 +5,7 @@ import com.stwn.ecommerce_java.entity.Category;
 import com.stwn.ecommerce_java.entity.Product;
 import com.stwn.ecommerce_java.entity.ProductCategory;
 import com.stwn.ecommerce_java.model.CategoryResponse;
+import com.stwn.ecommerce_java.model.PaginatedProductResponse;
 import com.stwn.ecommerce_java.model.ProductRequest;
 import com.stwn.ecommerce_java.model.ProductResponse;
 import com.stwn.ecommerce_java.repository.CategoryRepository;
@@ -12,6 +13,8 @@ import com.stwn.ecommerce_java.repository.ProductCategoryRepository;
 import com.stwn.ecommerce_java.repository.ProductRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -37,6 +40,16 @@ public class ProductServiceImpl implements ProductService{
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id : " + id));
         List<CategoryResponse> categoryResponses = getProductCategories(id);
         return ProductResponse.fromProductResponse(product, categoryResponses);
+    }
+
+    @Override
+    public Page<ProductResponse> findByPage(Pageable pageable) {
+        return productRepository.findByPageable(pageable)
+                /*rubah data dari product ke product response*/
+                .map(product -> {
+                    List<CategoryResponse> productCategories = getProductCategories(product.getId());
+                    return ProductResponse.fromProductResponse(product, productCategories);
+                });
     }
 
     @Override
@@ -105,6 +118,29 @@ public class ProductServiceImpl implements ProductService{
         List<ProductCategory> productCategories = productCategoryRepository.findCategoriesByProductId(id);
         productCategoryRepository.deleteAll(productCategories);
         productRepository.delete(product);
+    }
+
+    @Override
+    public Page<ProductResponse> findByNameAndPageable(String name, Pageable pageable) {
+        name = "%" + name.toLowerCase() + "%";
+        return productRepository.findByNamePageable(name, pageable)
+                /*rubah data dari product ke product response*/
+                .map(product -> {
+                    List<CategoryResponse> productCategories = getProductCategories(product.getId());
+                    return ProductResponse.fromProductResponse(product, productCategories);
+                });
+    }
+
+    @Override
+    public PaginatedProductResponse convertProductPage(Page<ProductResponse> productPage) {
+        return PaginatedProductResponse.builder()
+                .data(productPage.getContent())
+                .pageNo(productPage.getNumber())
+                .pageSize(productPage.getSize())
+                .totalElements(productPage.getTotalElements())
+                .totalPages(productPage.getTotalPages())
+                .last(productPage.isLast())
+                .build();
     }
 
     private List<Category> getCategoriesByIds(List<Long> categoryIds) {
