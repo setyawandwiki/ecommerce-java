@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ProductCategory {
+    /*untuk asumsikan id oleh library spring, karena pada table ini tidak ada primary key*/
     @EmbeddedId
     private ProductCategoryId id;
     @CreationTimestamp
