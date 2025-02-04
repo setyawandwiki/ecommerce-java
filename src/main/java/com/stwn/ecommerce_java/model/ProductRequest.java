@@ -24,7 +24,12 @@ public class ProductRequest {
     @NotNull(message = "deskripsi produk tidak boleh null")
     @Size(max = 100, message = "deskripsi produk tidak boleh lebih dari 100 karakter")
     private String description;
+    @NotNull(message = "stok tidak boleh kosong")
+    @Min(value = 0, message = "stok tidak boleh kurang atau sama dengan 0")
     private Integer stockQuantity;
+    @NotNull(message = "berat tidak boleh kosong")
+    @Min(value = 1000, message = "berat tidak boleh lebih dari 1000 gram")
     private BigDecimal weight;
+    @NotEmpty(message = "harus ada satu kategori yang dipilih")
     private List<Long> categoryIds;
 }
