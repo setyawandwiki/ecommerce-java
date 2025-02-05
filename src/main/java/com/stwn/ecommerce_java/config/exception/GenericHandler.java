@@ -1,7 +1,6 @@
 package com.stwn.ecommerce_java.config.exception;
 
-import com.stwn.ecommerce_java.common.errors.BadRequestException;
-import com.stwn.ecommerce_java.common.errors.ResourceNotFoundException;
+import com.stwn.ecommerce_java.common.errors.*;
 import com.stwn.ecommerce_java.model.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +18,12 @@ import java.util.Map;
 @RestControllerAdvice
 @Slf4j
 public class GenericHandler {
-    @ExceptionHandler(ResourceNotFoundException.class)
+    @ExceptionHandler(
+            {
+                    ResourceNotFoundException.class,
+                    UserNotFoundException.class,
+                    RoleNotFoundException.class
+            })
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleResourceNotFoundException(HttpServletRequest request, ResourceNotFoundException exception){
         return ErrorResponse.builder()
@@ -60,6 +64,27 @@ public class GenericHandler {
         return ErrorResponse.builder()
                 .code(HttpStatus.BAD_REQUEST.value())
                 .message(errors.toString())
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+    @ExceptionHandler(InvalidPasswordException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorResponse handleUnAuthenticationException(HttpServletRequest request, Exception exception){
+        return ErrorResponse.builder()
+                .code(HttpStatus.UNAUTHORIZED.value())
+                .message(exception.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+    @ExceptionHandler({
+            UsernameAlreadyExistsException.class,
+            EmailAlreadyExistsException.class
+    })
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorResponse handleConflictException(HttpServletRequest request, Exception exception){
+        return ErrorResponse.builder()
+                .code(HttpStatus.CONFLICT.value())
+                .message(exception.getMessage())
                 .timestamp(LocalDateTime.now())
                 .build();
     }

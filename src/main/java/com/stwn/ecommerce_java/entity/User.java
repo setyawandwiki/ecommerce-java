@@ -18,21 +18,25 @@ import java.time.LocalDateTime;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "product_ud")
-    private Long productId;
+    @Column(name = "user_id")
+    private Long userId;
+
+    @Column(nullable = false, unique = true)
+    private String username;
+
+    @Column(nullable = false, unique = true)
+    private String email;
+
     @Column(nullable = false)
-    private String name;
-    @Column(columnDefinition = "TEXT")
-    private String description;
+    private String password;
+
     @Column(nullable = false)
-    private BigDecimal price;
-    @Column(name = "stock_quantity", nullable = false)
-    private Integer stockQuantity;
-    @Column(name = "weight", nullable = false)
-    private BigDecimal weight;
+    private boolean enabled;
+
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;

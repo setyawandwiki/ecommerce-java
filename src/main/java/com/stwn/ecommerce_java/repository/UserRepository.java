@@ -10,7 +10,12 @@ import org.springframework.data.repository.query.Param;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
-    Optional<User> findByUsername(String username);
+    @Query(value = """
+            SELECT * FROM users WHERE lower(username) = :keyword 
+            OR 
+            lower(email) = :keyword
+            """, nativeQuery = true)
+    Optional<User> findByKeyword(@Param("keyword") String keyword);
     Boolean existsByByUsername(String username);
     Boolean existsByEmail(String email);
     @Query(value = """
