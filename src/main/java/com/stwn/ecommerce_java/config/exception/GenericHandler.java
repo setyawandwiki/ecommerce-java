@@ -3,14 +3,21 @@ package com.stwn.ecommerce_java.config.exception;
 import com.stwn.ecommerce_java.common.errors.*;
 import com.stwn.ecommerce_java.model.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AccountStatusException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import javax.naming.AuthenticationException;
+import java.nio.file.AccessDeniedException;
+import java.security.SignatureException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -43,9 +50,25 @@ public class GenericHandler {
     }
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorResponse handleGenericException(HttpServletRequest request, Exception exception){
+    public ErrorResponse handleGenericException(HttpServletRequest request,
+                                                HttpServletResponse response,
+                                                Exception exception){
         log.error("terjadi error. status code: " + HttpStatus.INTERNAL_SERVER_ERROR + " error message "
                 + exception.getMessage());
+        if(exception instanceof BadCredentialsException ||
+        exception instanceof AccountStatusException ||
+        exception instanceof AccessDeniedException ||
+        exception instanceof SignatureException ||
+        exception instanceof AuthenticationException ||
+        exception instanceof InsufficientAuthenticationException){
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return ErrorResponse.builder()
+                    .code(HttpStatus.FORBIDDEN.value())
+                    .message(exception.getMessage())
+                    .timestamp(LocalDateTime.now())
+                    .build();
+        }
+        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         return ErrorResponse.builder()
                 .code(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .message(exception.getMessage())
