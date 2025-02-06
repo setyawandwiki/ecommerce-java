@@ -99,6 +99,16 @@ public class GenericHandler {
                 .timestamp(LocalDateTime.now())
                 .build();
     }
+    @ExceptionHandler(ForbiddenAccessException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErrorResponse handleForbiddenException(HttpServletRequest req,
+                                                                Exception exception) {
+        return ErrorResponse.builder()
+                .code(HttpStatus.FORBIDDEN.value())
+                .message(exception.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
     @ExceptionHandler({
             UsernameAlreadyExistsException.class,
             EmailAlreadyExistsException.class

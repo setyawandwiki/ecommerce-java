@@ -17,7 +17,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
-import javax.security.sasl.AuthenticationException;
 import java.io.IOException;
 
 @Component
@@ -43,14 +42,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if(jwtService.validateToken(jwt)){
                 final String userIdentifier = jwtService.getUsernameFromToken(jwt);
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-                if(userIdentifier != null && authentication != null){
+                if(userIdentifier != null && authentication == null){
                     UserDetails userDetails = userDetailsService.loadUserByUsername(userIdentifier);
                     UsernamePasswordAuthenticationToken authenticationToken =
                             new UsernamePasswordAuthenticationToken(
                                     userDetails, null, userDetails.getAuthorities()
                     );
                     authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
                 }
                 filterChain.doFilter(request, response);
             }

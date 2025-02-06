@@ -49,7 +49,7 @@ public class UserServiceImpl implements UserService{
                 .build();
 
         userRepository.save(user);
-        Role userRole = roleRepository.findByName("ROLE_USEr")
+        Role userRole = roleRepository.findByName("ROLE_USER")
                 .orElseThrow(()-> new RoleNotFoundException("default role not found"));
         UserRole userRoleRelation = UserRole.builder()
                 .id(new UserRole.UserRoleId(user.getUserId(), userRole.getRoleId()))
@@ -108,13 +108,13 @@ public class UserServiceImpl implements UserService{
     public void deleteUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException("user not found with id " + id));
-        userRoleRepository.deleteByUserId(user.getUserId());
+        userRoleRepository.deleteByIdUserId(user.getUserId());
         userRepository.delete(user);
     }
 
     @Override
     public boolean existsByUsername(String username) {
-        return userRepository.existsByByUsername(username);
+        return userRepository.existsByUsername(username);
     }
 
     @Override

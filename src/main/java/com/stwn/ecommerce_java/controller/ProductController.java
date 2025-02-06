@@ -4,6 +4,7 @@ import com.stwn.ecommerce_java.model.PaginatedProductResponse;
 import com.stwn.ecommerce_java.model.ProductRequest;
 import com.stwn.ecommerce_java.model.ProductResponse;
 import com.stwn.ecommerce_java.service.ProductService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.query.SortDirection;
@@ -20,6 +21,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping(path = "/products")
+@SecurityRequirement(name = "Bearer")
 @RequiredArgsConstructor
 public class ProductController {
     private final ProductService productService;

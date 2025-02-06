@@ -16,7 +16,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             lower(email) = :keyword
             """, nativeQuery = true)
     Optional<User> findByKeyword(@Param("keyword") String keyword);
-    Boolean existsByByUsername(String username);
+    Boolean existsByUsername(String username);
     Boolean existsByEmail(String email);
     @Query(value = """
             SELECT * FROM users WHERE lower(username) LIKE :keyword 
