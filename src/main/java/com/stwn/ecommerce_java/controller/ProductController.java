@@ -3,6 +3,7 @@ package com.stwn.ecommerce_java.controller;
 import com.stwn.ecommerce_java.model.PaginatedProductResponse;
 import com.stwn.ecommerce_java.model.ProductRequest;
 import com.stwn.ecommerce_java.model.ProductResponse;
+import com.stwn.ecommerce_java.model.UserInfo;
 import com.stwn.ecommerce_java.service.ProductService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -14,6 +15,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -58,6 +61,10 @@ public class ProductController {
     }
     @PostMapping
     public ResponseEntity<ProductResponse> createProduct(@RequestBody @Valid ProductRequest request){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserInfo userInfo = (UserInfo) authentication.getPrincipal();
+
+        request.setUser(userInfo.getUser());
         ProductResponse productResponse = productService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(productResponse);
     }

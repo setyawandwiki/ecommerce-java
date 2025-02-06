@@ -1,5 +1,6 @@
 package com.stwn.ecommerce_java.model;
 
+import com.stwn.ecommerce_java.entity.User;
 import jakarta.persistence.Column;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -32,4 +33,5 @@ public class ProductRequest {
     private BigDecimal weight;
     @NotEmpty(message = "harus ada satu kategori yang dipilih")
     private List<Long> categoryIds;
+    private User user;
 }
