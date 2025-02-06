@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface CartItemRepository extends JpaRepository<CartItem, Long> {
     @Query(value = """
@@ -21,7 +22,7 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
             WHERE cart_id = :cartId
             AND product_id = :productId
             """, nativeQuery = true)
-    CartItem findByCartIdAndProductId(@Param("cartId") Long cartId,@Param("productId") Long productId);
+    Optional<CartItem> findByCartIdAndProductId(@Param("cartId") Long cartId, @Param("productId") Long productId);
     @Modifying /*digunkana untuk query perubahan data*/
     @Query(value = """
             DELETE * FROM cart_items
