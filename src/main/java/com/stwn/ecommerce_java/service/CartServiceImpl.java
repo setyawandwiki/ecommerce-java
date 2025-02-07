@@ -52,7 +52,8 @@ public class CartServiceImpl implements CartService{
             cartItemRepository.save(existingItem);
         }else{
             CartItem newItem = CartItem.builder()
-                    .productId(cart.getCartId())
+                    .productId(productId)
+                    .cartId(cart.getCartId())
                     .quantity(quantity)
                     .price(product.getPrice())
                     .build();
@@ -88,6 +89,7 @@ public class CartServiceImpl implements CartService{
     }
 
     @Override
+    @Transactional
     public void removeItemFromCart(Long userId, Long cartItemId) {
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(
@@ -109,6 +111,7 @@ public class CartServiceImpl implements CartService{
     }
 
     @Override
+    @Transactional
     public void clearCart(Long userId) {
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(
