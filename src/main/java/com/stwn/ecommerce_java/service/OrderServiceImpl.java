@@ -29,19 +29,20 @@ public class OrderServiceImpl implements OrderService {
     private final ProductRepository productRepository;
     private final ShippingService shippingService;
     private static final BigDecimal TAX_RATE = BigDecimal.valueOf(0.03);
+    private final PaymentService paymentService;
+
     @Override
     @Transactional
-    public Order checkOut(CheckOutRequest request) {
-        List<CartItem> selectedItems = cartItemRepository.findAllById(request.getSelectedCartItemIds());
-        if(selectedItems.isEmpty()){
-            throw new ResourceNotFoundException("not cart items found for checkout");
+    public OrderResponse checkOut(CheckOutRequest request) {
+        List<CartItem> selectedItems = cartItemRepository.findAllById(
+                request.getSelectedCartItemIds());
+        if (selectedItems.isEmpty()) {
+            throw new ResourceNotFoundException("No cart items found for checkout");
         }
-        UserAddress shippingAddress = userAddressRepository.findById(request.getUserId())
-                .orElseThrow(()->
-                        new ResourceNotFoundException("shipping address with id "
-                                + request.getUserAddressId() + "is not found"));
+        UserAddress shippingAddress = userAddressRepository.findById(request.getUserAddressId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Shipping address with id " + request.getUserAddressId() + " is not found"));
 
-        // request is validated
         Order newOrder = Order.builder()
                 .userId(request.getUserId())
                 .status(OrderStatus.PENDING)
@@ -52,52 +53,85 @@ public class OrderServiceImpl implements OrderService {
                 .shippingFee(BigDecimal.ZERO)
                 .build();
 
-        Order saveOrder = orderRepository.save(newOrder);
-        List<OrderItem> orderItems = selectedItems.stream().map(value -> {
-            return OrderItem.builder()
-                    .orderId(saveOrder.getOrderId())
-                    .productId(value.getProductId())
-                    .quantity(value.getQuantity())
-                    .price(value.getPrice())
-                    .userAddressId(shippingAddress.getUserAddressId())
-                    .build();
-        }).toList();
-
+        Order savedOrder = orderRepository.save(newOrder);
+        List<OrderItem> orderItems = selectedItems.stream()
+                .map(cartItem -> {
+                    return OrderItem.builder()
+                            .orderId(savedOrder.getOrderId())
+                            .productId(cartItem.getProductId())
+                            .quantity(cartItem.getQuantity())
+                            .price(cartItem.getPrice())
+                            .userAddressId(shippingAddress.getUserAddressId())
+                            .build();
+                })
+                .toList();
         orderItemRepository.saveAll(orderItems);
-
         cartItemRepository.deleteAll(selectedItems);
-
-        BigDecimal subTotal = orderItems.stream()
-                .map(orderItem -> orderItem.getPrice().multiply(BigDecimal.valueOf(orderItem.getQuantity())))
+        BigDecimal subtotal = orderItems.stream()
+                .map(
+                        orderItem -> orderItem.getPrice().multiply(BigDecimal.valueOf(orderItem.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal shippingFee = orderItems.stream().map(orderItem ->{
-            Optional<Product> product = productRepository.findById(orderItem.getProductId());
-            if(product.isEmpty()){
-                return BigDecimal.ZERO;
-            }
-            Optional<UserAddress> sellerAddress = userAddressRepository.findByUserIdAndIsDefaultTrue(product.get().getUserId());
-            if(sellerAddress.isEmpty()){
-                return BigDecimal.ZERO;
-            }
-            BigDecimal totalWeight = product.get().getWeight().multiply(BigDecimal.valueOf(orderItem.getQuantity()));
-            ShippingRateRequest rateRequest = ShippingRateRequest.builder()
-                    .totalWeightInGrams(totalWeight)
-                    .fromAddress(ShippingRateRequest.fromUserAddress(sellerAddress.get()))
-                    .toAddress(ShippingRateRequest.fromUserAddress(shippingAddress))
-                    .build();
-            ShippingRateResponse rateResponse = shippingService.calculateShippingRate(rateRequest);
-            return rateResponse.getShippingFee();
-        }).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal shippingFee = orderItems.stream()
+                .map(orderItem -> {
+                    Optional<Product> product = productRepository.findById(orderItem.getProductId());
+                    if (product.isEmpty()) {
+                        return BigDecimal.ZERO;
+                    }
 
-        BigDecimal taxFee = subTotal.multiply(TAX_RATE);
-        BigDecimal totalAmount = subTotal.add(taxFee).add(shippingFee);
+                    Optional<UserAddress> sellerAddress = userAddressRepository.findByUserIdAndIsDefaultTrue(
+                            product.get()
+                                    .getUserId());
+                    if (sellerAddress.isEmpty()) {
+                        return BigDecimal.ZERO;
+                    }
 
-        saveOrder.setSubtotal(subTotal);
-        saveOrder.setShippingFee(shippingFee);
-        saveOrder.setTotalAmount(totalAmount);
+                    BigDecimal totalWeight = product.get().getWeight()
+                            .multiply(BigDecimal.valueOf(orderItem.getQuantity()));
+                    // calculate shipping rate
+                    ShippingRateRequest rateRequest = ShippingRateRequest.builder()
+                            .totalWeightInGrams(totalWeight)
+                            .fromAddress(ShippingRateRequest.fromUserAddress(sellerAddress.get()))
+                            .toAddress(ShippingRateRequest.fromUserAddress(shippingAddress))
+                            .build();
+                    ShippingRateResponse rateResponse = shippingService.calculateShippingRate(rateRequest);
+                    return rateResponse.getShippingFee();
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        return orderRepository.save(saveOrder);
+        BigDecimal taxFee = subtotal.multiply(TAX_RATE);
+        BigDecimal totalAmount = subtotal.add(taxFee).add(shippingFee);
+
+        savedOrder.setSubtotal(subtotal);
+        savedOrder.setShippingFee(shippingFee);
+        savedOrder.setTaxFee(taxFee);
+        savedOrder.setTotalAmount(totalAmount);
+
+        orderRepository.save(savedOrder);
+        // interact with xendit api
+        // generate payment url
+        String paymentUrl;
+
+        try {
+            PaymentResponse paymentResponse = paymentService.create(savedOrder);
+            savedOrder.setXenditInvoiceId(paymentResponse.getXenditInvoiceId());
+            savedOrder.setXenditPaymentStatus(paymentResponse.getXenditInvoiceStatus());
+            paymentUrl = paymentResponse.getXenditPaymentUrl();
+
+            orderRepository.save(savedOrder);
+        } catch (Exception ex) {
+            log.error("Payment creation for order: " + savedOrder.getOrderId() + " is failed. Reason:"
+                    + ex.getMessage());
+            savedOrder.setStatus(OrderStatus.PAYMENT_FAILED);
+
+            orderRepository.save(savedOrder);
+            return OrderResponse.fromOrder(savedOrder);
+        }
+        log.error("TESSST10");
+        OrderResponse orderResponse = OrderResponse.fromOrder(savedOrder);
+        orderResponse.setPaymentUrl(paymentUrl);
+
+        return orderResponse;
     }
 
     @Override
@@ -130,14 +164,18 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public List<OrderItemResponse> findOrderItemsByOrderId(Long orderId) {
         List<OrderItem> orderItems = orderItemRepository.findByOrderId(orderId);
-        if(orderItems.isEmpty()){
+        if (orderItems.isEmpty()) {
             return Collections.emptyList();
         }
+
         List<Long> productIds = orderItems.stream()
-                .map(OrderItem::getProductId).toList();
-        List<Long> shippingAddressIds = orderItems.stream()
-                .map(OrderItem::getOrderItemId)
+                .map(OrderItem::getProductId)
                 .toList();
+        List<Long> shippingAddressIds = orderItems.stream()
+                .map(OrderItem::getUserAddressId)
+                .toList();
+
+        // Query list of products & shipping address from the orders
         List<Product> products = productRepository.findAllById(productIds);
         List<UserAddress> shippingAddress = userAddressRepository.findAllById(shippingAddressIds);
 
@@ -151,16 +189,18 @@ public class OrderServiceImpl implements OrderService {
                     Product product = productMap.get(orderItem.getProductId());
                     UserAddress userAddress = userAddressMap.get(orderItem.getUserAddressId());
 
-                    if(product == null){
-                        throw new ResourceNotFoundException("Product with id " + orderItem.getProductId() + " is not found");
+                    if (product == null) {
+                        throw new ResourceNotFoundException(
+                                "Product with id " + orderItem.getProductId() + " is not found");
                     }
-
-                    if(userAddress == null){
-                        throw new ResourceNotFoundException("User address with id " + userAddress.getUserAddressId() + " is not found");
+                    if (userAddress == null) {
+                        throw new ResourceNotFoundException(
+                                "User address with id " + orderItem.getUserAddressId() + " is not found");
                     }
 
                     return OrderItemResponse.fromOrderItemProductAndAddress(orderItem, product, userAddress);
-                }).toList();
+                })
+                .toList();
     }
 
     @Override

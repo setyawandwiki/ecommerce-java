@@ -33,27 +33,31 @@ public class CartServiceImpl implements CartService{
     @Transactional
     public void addItemToCart(Long userId, Long productId, int quantity) {
         Cart cart = cartRepository.findByUserId(userId)
-                .orElseGet(()->{
+                .orElseGet(() -> {
                     Cart newCart = Cart.builder()
                             .userId(userId)
                             .build();
                     return cartRepository.save(newCart);
                 });
+
         Product product = productRepository.findById(productId)
                 .orElseThrow(()-> new ResourceNotFoundException("product not found with product id : " + productId));
-        // TIDAK BISA MASUKAN BARANG KE CART YANG ANDA JUAL
-        if(product.getUserId().equals(userId)){
-            throw new BadRequestException("cannot add your own product to cart");
+
+        if (product.getUserId().equals(userId)) {
+            throw new BadRequestException("Cannot add your own product to cart");
         }
-        Optional<CartItem> existingItemOpt = cartItemRepository.findByCartIdAndProductId(cart.getCartId(), productId);
-        if(existingItemOpt.isPresent()){
+
+        Optional<CartItem> existingItemOpt = cartItemRepository.findByCartIdAndProductId(
+                cart.getCartId(), productId);
+
+        if (existingItemOpt.isPresent()) {
             CartItem existingItem = existingItemOpt.get();
             existingItem.setQuantity(existingItem.getQuantity() + quantity);
             cartItemRepository.save(existingItem);
-        }else{
+        } else {
             CartItem newItem = CartItem.builder()
-                    .productId(productId)
                     .cartId(cart.getCartId())
+                    .productId(productId)
                     .quantity(quantity)
                     .price(product.getPrice())
                     .build();
@@ -125,16 +129,16 @@ public class CartServiceImpl implements CartService{
         if (cartItems.isEmpty()) {
             return Collections.emptyList();
         }
-
+        log.error("TESSST 1");
         List<Long> productIds = cartItems.stream()
                 .map(CartItem::getProductId)
                 .toList();
-
+        log.error("TESSST 2");
         List<Product> products = productRepository.findAllById(productIds);
-
+        log.error("TESSST 3");
         Map<Long, Product> productMap = products.stream()
                 .collect(Collectors.toMap(Product::getId, Function.identity()));
-
+        log.error("TESSST 4");
         return cartItems.stream()
                 .map(cartItem -> {
                     Product product = productMap.get(cartItem.getProductId());

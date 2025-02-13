@@ -10,8 +10,9 @@ import org.springframework.context.annotation.Configuration;
 public class XenditConfig {
     @Value("${xendit.api-key}")
     private String xenditApiKey;
+
     @Bean
-    public Xendit xenditClient(){
+    public Xendit xenditClient() {
         Xendit.apiKey = xenditApiKey;
         return new Xendit();
     }

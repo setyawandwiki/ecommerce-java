@@ -25,6 +25,10 @@ public class OrderResponse {
     private BigDecimal totalAmount;
     private String status;
     private LocalDateTime orderDate;
+    private String xenditInvoiceId;
+    private String xenditPaymentStatus;
+    private String xenditPaymentMethod;
+    private String paymentUrl;
 
     public static OrderResponse fromOrder(Order order){
         return OrderResponse.builder()
@@ -36,6 +40,9 @@ public class OrderResponse {
                 .totalAmount(order.getTotalAmount())
                 .status(order.getStatus().name())
                 .orderDate(order.getOrderDate())
+                .xenditInvoiceId(order.getXenditInvoiceId())
+                .xenditPaymentStatus(order.getXenditPaymentStatus())
+                .xenditPaymentMethod(order.getXenditPaymentMethod())
                 .build();
     }
 }

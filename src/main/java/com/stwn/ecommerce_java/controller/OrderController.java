@@ -20,8 +20,8 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(name = "orders")
 @SecurityRequirement(name = "Bearer")
+@RequestMapping("orders")
 public class OrderController {
 
     private final OrderService orderService;
@@ -34,9 +34,8 @@ public class OrderController {
         UserInfo userInfo = (UserInfo) authentication.getPrincipal();
 
         request.setUserId(userInfo.getUser().getUserId());
-        Order order = orderService.checkOut(request);
-        OrderResponse orderResponse = OrderResponse.fromOrder(order);
-        return ResponseEntity.ok(orderResponse);
+        OrderResponse order = orderService.checkOut(request);
+        return ResponseEntity.ok(order);
     }
 
     @GetMapping("/{orderId}")

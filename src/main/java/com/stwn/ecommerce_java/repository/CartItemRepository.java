@@ -11,14 +11,14 @@ import java.util.Optional;
 
 public interface CartItemRepository extends JpaRepository<CartItem, Long> {
     @Query(value = """
-            SELECT * FROM cart_items ci
+            SELECT ci.* FROM cart_items ci
             JOIN carts c 
             ON ci.cart_item_id = c.cart_id
             WHERE c.user_id = :userId
             """, nativeQuery = true)
     List<CartItem> getUserCartItems(@Param("userId") Long userId);
     @Query(value = """
-            SELECT * FROM cart_items
+            SELECT * FROM cart_items AS ci
             WHERE cart_id = :cartId
             AND product_id = :productId
             """, nativeQuery = true)
