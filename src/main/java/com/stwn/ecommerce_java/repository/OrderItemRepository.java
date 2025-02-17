@@ -1,6 +1,10 @@
 package com.stwn.ecommerce_java.repository;
 
+import com.stwn.ecommerce_java.entity.Order;
 import com.stwn.ecommerce_java.entity.OrderItem;
+import org.aspectj.weaver.ast.Or;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

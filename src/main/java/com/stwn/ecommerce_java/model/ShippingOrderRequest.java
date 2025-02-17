@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Builder
 @Data
 @NoArgsConstructor
@@ -16,7 +18,7 @@ public class ShippingOrderRequest {
     private Long orderId;
     private Address fromAddress;
     private Address toAddress;
-    private int totalWeightInGrams;
+    private BigDecimal totalWeightInGrams;
     @Data
     @Builder
     public static class Address{

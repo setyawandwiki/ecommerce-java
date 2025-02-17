@@ -29,6 +29,7 @@ public class ApiSecurityConfiguration {
                 .authorizeHttpRequests(registry -> {
                     registry.requestMatchers("/auth/**", "/api-docs/**", "/swagger-ui/**","/webhook/xendit")
                             .permitAll()
+                            .requestMatchers("/admin/**").hasAnyAuthority("ROLE_ADMIN")
                             .anyRequest()
                             .authenticated();
                 }).sessionManagement(configurer->{
@@ -41,7 +42,11 @@ public class ApiSecurityConfiguration {
                                     response,
                                     authException) -> {
                                 throw authException;
-                })).build();
+                })
+                                .accessDeniedHandler(((request, response, accessDeniedException) -> {
+                                    throw accessDeniedException;
+                                }))
+                ).build();
     }
     @Bean
     CorsConfigurationSource corsConfigurationSource(){

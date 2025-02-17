@@ -39,7 +39,7 @@ public class GenericHandler {
                 .timestamp(LocalDateTime.now())
                 .build();
     }
-    @ExceptionHandler(BadRequestException.class)
+    @ExceptionHandler({BadRequestException.class, InventoryException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse badRequestException(HttpServletRequest request, BadRequestException exception){
         return ErrorResponse.builder()

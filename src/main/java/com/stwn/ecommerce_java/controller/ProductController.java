@@ -1,5 +1,6 @@
 package com.stwn.ecommerce_java.controller;
 
+import com.stwn.ecommerce_java.common.PageUtil;
 import com.stwn.ecommerce_java.model.PaginatedProductResponse;
 import com.stwn.ecommerce_java.model.ProductRequest;
 import com.stwn.ecommerce_java.model.ProductResponse;
@@ -40,15 +41,7 @@ public class ProductController {
         @RequestParam(defaultValue = "product_id,asc") String[] sort,
         @RequestParam(required = false) String name
     ){
-        List<Sort.Order> orders = new ArrayList<>();
-        if(sort[0].contains(",")){
-            for (String sortOrder : sort) {
-                String[] _sort = sortOrder.split(",");
-                orders.add(new Sort.Order(getSortDirection(_sort[1]), _sort[0]));
-            }
-        }else{
-            orders.add(new Sort.Order(getSortDirection(sort[1]), sort[0]));
-        }
+        List<Sort.Order> orders = PageUtil.parseSortOrderRequest(sort);
         Pageable pageable = PageRequest.of(page, size, Sort.by(orders));
         Page<ProductResponse> productResponses;
         if (name != null && !name.isEmpty()) {
@@ -77,13 +70,5 @@ public class ProductController {
     public ResponseEntity<Void> deleteProduct(@PathVariable("id") Long productId){
         productService.delete(productId);
         return ResponseEntity.noContent().build();
-    }
-    private Sort.Direction getSortDirection(String direction){
-        if(direction.equals("asc")){
-            return Sort.Direction.ASC;
-        }else if(direction.equals("desc")){
-            return Sort.Direction.DESC;
-        }
-        return Sort.Direction.ASC;
     }
 }

@@ -23,7 +23,7 @@ public class OrderResponse {
     private BigDecimal shippingFee;
     private BigDecimal taxFee;
     private BigDecimal totalAmount;
-    private String status;
+    private OrderStatus status;
     private LocalDateTime orderDate;
     private String xenditInvoiceId;
     private String xenditPaymentStatus;
@@ -38,7 +38,7 @@ public class OrderResponse {
                 .shippingFee(order.getShippingFee())
                 .taxFee(order.getTaxFee())
                 .totalAmount(order.getTotalAmount())
-                .status(order.getStatus().name())
+                .status(order.getStatus())
                 .orderDate(order.getOrderDate())
                 .xenditInvoiceId(order.getXenditInvoiceId())
                 .xenditPaymentStatus(order.getXenditPaymentStatus())

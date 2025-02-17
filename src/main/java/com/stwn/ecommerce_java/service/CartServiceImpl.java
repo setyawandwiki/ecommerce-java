@@ -2,6 +2,7 @@ package com.stwn.ecommerce_java.service;
 
 import com.stwn.ecommerce_java.common.errors.BadRequestException;
 import com.stwn.ecommerce_java.common.errors.ForbiddenAccessException;
+import com.stwn.ecommerce_java.common.errors.InventoryException;
 import com.stwn.ecommerce_java.common.errors.ResourceNotFoundException;
 import com.stwn.ecommerce_java.entity.Cart;
 import com.stwn.ecommerce_java.entity.CartItem;
@@ -40,11 +41,15 @@ public class CartServiceImpl implements CartService{
                     return cartRepository.save(newCart);
                 });
 
-        Product product = productRepository.findById(productId)
+        Product product = productRepository.findByIdPessimisticLock(productId)
                 .orElseThrow(()-> new ResourceNotFoundException("product not found with product id : " + productId));
 
         if (product.getUserId().equals(userId)) {
             throw new BadRequestException("Cannot add your own product to cart");
+        }
+
+        if(product.getStockQuantity() <= 0){
+            throw new InventoryException("product is equal or below zero");
         }
 
         Optional<CartItem> existingItemOpt = cartItemRepository.findByCartIdAndProductId(

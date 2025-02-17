@@ -1,5 +1,6 @@
 package com.stwn.ecommerce_java.service;
 
+import com.stwn.ecommerce_java.common.OrderStateTransition;
 import com.stwn.ecommerce_java.common.errors.ResourceNotFoundException;
 import com.stwn.ecommerce_java.entity.Order;
 import com.stwn.ecommerce_java.entity.OrderItem;
@@ -50,14 +51,25 @@ public class ShippingServiceImpl implements ShippingService {
         Order order = orderRepository.findById(request.getOrderId())
                 .orElseThrow(()->
                         new ResourceNotFoundException("Order with id " + request.getOrderId() + " not found"));
+
+        if(!OrderStateTransition.isValidTransition(order.getStatus(), OrderStatus.SHIPPED)){
+            throw new IllegalStateException("Invalid order status transition fron " + order.getStatus()
+                    + " to shupped");
+        }
+
         order.setStatus(OrderStatus.SHIPPING);
         order.setAwbNumber(awbNumber);
         orderRepository.save(order);
 
+        BigDecimal shippingFee = BASE_RATE.add(
+                request.getTotalWeightInGrams().divide(BigDecimal.valueOf(1000)).multiply(RATE_PER_KG)
+                        .setScale(2, RoundingMode.HALF_UP)
+        );
         String estimatedDeliveryFee = "3 - 5 hari kerja";
 
         return ShippingOrderResponse.builder()
                 .awbNumber(awbNumber)
+                .shippingFee(shippingFee)
                 .estimatedDeliveryTime(estimatedDeliveryFee)
                 .build();
     }
